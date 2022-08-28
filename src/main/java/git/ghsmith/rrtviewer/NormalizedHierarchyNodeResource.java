@@ -32,6 +32,7 @@ public class NormalizedHierarchyNodeResource {
         public Boolean children;
         public String nodeType;
         public String dispId;
+        public Boolean hasEap;
     }
 
     public static final String[] attributes = {
@@ -79,11 +80,12 @@ public class NormalizedHierarchyNodeResource {
         List jsTreeList = new ArrayList();
         for(NormalizedHierarchyNode nhn : getJsonByParentId(parentId, response)) {
             JsTree jsTree = new JsTree();
-            jsTree.id = nhn.getId();
-            jsTree.text = String.format("[%s] %s", nhn.nodeType, nhn.getDisp());
-            jsTree.children = (getJsonByParentId(nhn.getId(), response).size() > 0);
-            jsTree.nodeType = nhn.getNodeType();
-            jsTree.dispId = nhn.getId().replaceAll("(-.*$|RRT$|CN$)", "");
+            jsTree.id = nhn.id;
+            jsTree.text = String.format("[%s] %s", nhn.nodeType, nhn.disp);
+            jsTree.children = !nhn.children.isEmpty();
+            jsTree.nodeType = nhn.nodeType;
+            jsTree.dispId = nhn.dispId;
+            jsTree.hasEap = nhn.hasEap;
             jsTreeList.add(jsTree);
         }
         return jsTreeList;
@@ -117,6 +119,7 @@ public class NormalizedHierarchyNodeResource {
                         nhn.nodeType = record.get("NODE_TYPE");
                         nhn.seq = Long.valueOf(record.get("COLLATING_SEQ"));
                         nhn.disp = record.get("NODE_NAME");
+                        nhn.dispId = nhn.id.replaceAll("(-.*$|RRT$|CN$)", "");
                         for(String attribute : attributes) {
                             nhn.attributeMap.put(attribute, record.get(attribute));
                         }
@@ -134,6 +137,7 @@ public class NormalizedHierarchyNodeResource {
                     nhnMapById.put(rootNhn.id, rootNhn);
                     for(NormalizedHierarchyNode nhn : nhnMapById.values()) {
                         Collections.sort(nhn.children);
+                        nhn.hasEap = searchForEap(nhn);
                     }
                 }
                 catch(FileNotFoundException ex) {
@@ -149,10 +153,7 @@ public class NormalizedHierarchyNodeResource {
     }
 
     private void search(NormalizedHierarchyNode nhn, String searchString, Map<String, Integer[]> searchResultMap) {
-        if(
-            (nhn.disp != null && nhn.disp.toUpperCase().contains(searchString.toUpperCase()))
-            || (nhn.id != null && nhn.id.toUpperCase().contains(searchString.toUpperCase()))
-        ) {
+        if(nhn.containsIgnoreCase(searchString)) {
             NormalizedHierarchyNode nhnWalker = nhn;
             while(nhnWalker != null) {
                 if(searchResultMap.get(nhnWalker.getId()) == null) {
@@ -167,6 +168,18 @@ public class NormalizedHierarchyNodeResource {
         for(NormalizedHierarchyNode childNhn : nhn.children) {
             search(childNhn, searchString, searchResultMap);
         }
+    }    
+
+    private boolean searchForEap(NormalizedHierarchyNode nhn) {
+        if(nhn.nodeType != null && nhn.nodeType.equals("EAP")) {
+            return true;
+        }
+        for(NormalizedHierarchyNode childNhn : nhn.children) {
+            if(searchForEap(childNhn)) {
+                return true;
+            }
+        }
+        return false;
     }    
     
 }

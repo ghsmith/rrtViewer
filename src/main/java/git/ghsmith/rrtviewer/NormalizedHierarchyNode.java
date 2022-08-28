@@ -12,6 +12,8 @@ public class NormalizedHierarchyNode implements Comparable<NormalizedHierarchyNo
     String nodeType;
     Long seq;
     String disp;
+    String dispId;
+    boolean hasEap;
     
     Map<String, String> attributeMap = new LinkedHashMap<>();
 
@@ -21,6 +23,22 @@ public class NormalizedHierarchyNode implements Comparable<NormalizedHierarchyNo
     @Override
     public int compareTo(NormalizedHierarchyNode o) {
         return(seq.compareTo(o.seq));
+    }
+    
+    public boolean containsIgnoreCase(String searchString){
+        String searchStringUC = searchString.toUpperCase();
+        if(
+            (disp != null && disp.toUpperCase().contains(searchStringUC))
+            || (dispId != null && dispId.toUpperCase().contains(searchStringUC))
+        ){
+            return true;
+        }
+        for(String attribute : attributeMap.values()) {
+            if(attribute != null && attribute.toUpperCase().contains(searchStringUC)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     public String getId() {
@@ -63,6 +81,22 @@ public class NormalizedHierarchyNode implements Comparable<NormalizedHierarchyNo
         this.disp = disp;
     }
 
+    public String getDispId() {
+        return disp;
+    }
+
+    public void setDispId(String disp) {
+        this.disp = disp;
+    }
+
+    public boolean isHasEap() {
+        return hasEap;
+    }
+
+    public void setHasEap(boolean hasEap) {
+        this.hasEap = hasEap;
+    }
+    
     public Map<String, String> getAttributeMap() {
         return attributeMap;
     }
