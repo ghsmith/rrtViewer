@@ -1,0 +1,364 @@
+OBJECTIVE:
+
+[RRT] NAME
+  [CN] Name [#]
+    [LRR] Name [#]
+      [EAP] Name [#]
+
+OBJECTIVE:
+[RRT] NAME
+  [EAP] Name [#]
+
+create table epic_rrt_normalized
+(
+  id varchar2(32) not null,
+  parent_id varchar2(32),
+  node_type varchar2(32) not null,
+  collating_seq number not null,
+  node_name varchar2(255) not null,
+  path_precalculated varchar2(255),
+
+  Common_Name varchar2(255),
+  Procedure_Name varchar2(255),
+  Procedure_ID varchar2(255),
+  Procedure_Category varchar2(255),
+  LRR_ID varchar2(255),
+  LRR_Name varchar2(255),
+  Base_Name varchar2(255),
+  LRR_External_Name varchar2(255),
+  LRR_Issue varchar2(255),
+  Test_Issue varchar2(255),
+  Test_Inactive varchar2(255),
+  Test_ID varchar2(255),
+  Test_Name varchar2(255),
+  Show_EAP_in_RR varchar2(255),
+
+  constraint ern_pk primary key(id)
+);
+
+--import epic_rrt_groupers.csv
+
+create table epic_rrt_01
+(
+  collating_seq number,
+  Result_Review_tree varchar2(255),
+  Common_Name varchar2(255),
+  Procedure_Name varchar2(255),
+  Procedure_ID varchar2(255),
+  Procedure_Category varchar2(255),
+  LRR_ID varchar2(255),
+  LRR_Name varchar2(255),
+  Base_Name varchar2(255),
+  LRR_External_Name varchar2(255),
+  LRR_Issue varchar2(255),
+  Test_Issue varchar2(255),
+  Test_Inactive varchar2(255),
+  Test_ID varchar2(255),
+  Test_Name varchar2(255),
+  Show_EAP_in_RR varchar2(255)
+);
+
+create index epic_rrt_01_cn_idx on epic_rrt_01(common_name);
+
+--import RR.xml
+
+insert into epic_rrt_normalized(id, parent_id, node_type, collating_seq, node_name, path_precalculated)
+with charting_names as
+(
+  select
+    min(to_number(lrr_id)) min_lrr_id,
+    min(collating_seq) keep(dense_rank first order by to_number(lrr_id)) collating_seq_for_min_lrr_id,
+    min(nvl(lrr_external_name, lrr_name)) keep(dense_rank first order by to_number(lrr_id)) lrr_ext_name_or_lrr_name_for_min_lrr_id,
+    min(result_review_tree) keep(dense_rank first order by to_number(lrr_id)) rrt_for_min_lrr_id
+  from
+    epic_rrt_01
+  group by
+    common_name
+)
+select distinct
+  min_lrr_id || 'RRT',
+  (select id from epic_rrt_normalized where path_precalculated = charting_names.rrt_for_min_lrr_id),
+  'RRT',
+  collating_seq_for_min_lrr_id,
+  lrr_ext_name_or_lrr_name_for_min_lrr_id,
+  NULL
+from
+  charting_names
+where
+  min_lrr_id is not NULL;
+
+-- get rid of some PFT LRRs
+delete from epic_rrt_normalized where parent_id is NULL and id not in ('GHS0', 'GHS148');
+
+insert into epic_rrt_normalized(id, parent_id, node_type, collating_seq, node_name, path_precalculated)
+with common_names as
+(
+  select
+    min(to_number(lrr_id)) min_lrr_id,
+    min(collating_seq) keep(dense_rank first order by to_number(lrr_id)) collating_seq_for_min_lrr_id,
+    min(lrr_name) keep(dense_rank first order by to_number(lrr_id)) lrr_name_for_min_lrr_id
+  from
+    epic_rrt_01
+  group by
+    common_name
+)
+select
+  min_lrr_id || 'CN',
+  (select id from epic_rrt_normalized where id = common_names.min_lrr_id || 'RRT'),
+  'CN',
+  collating_seq_for_min_lrr_id,
+  lrr_name_for_min_lrr_id,
+  NULL
+from
+  common_names
+where
+  min_lrr_id is not NULL;
+
+-- get rid of some PFT LRRs
+delete from epic_rrt_normalized where parent_id is NULL and id not in ('GHS0', 'GHS148');
+
+insert into epic_rrt_normalized(id, parent_id, node_type, collating_seq, node_name, path_precalculated)
+with lrr as
+(
+  select
+    lrr_id,
+    min(collating_seq) collating_seq,
+    min(lrr_name) lrr_name,
+    (select min(to_number(lrr_id)) from epic_rrt_01 where common_name = er01.common_name) min_lrr_id
+  from
+    epic_rrt_01 er01
+  group by
+    lrr_id,
+    common_name
+)
+select
+  lrr_id,
+  (select id from epic_rrt_normalized where id = lrr.min_lrr_id || 'CN'),
+  'LRR',
+  collating_seq,
+  lrr_name,
+  NULL
+from
+  lrr
+where
+  lrr_id is not NULL;
+
+-- get rid of some PFT LRRs
+delete from epic_rrt_normalized where parent_id is NULL and id not in ('GHS0', 'GHS148');
+
+insert into epic_rrt_normalized(id, parent_id, node_type, collating_seq, node_name, path_precalculated)
+with eap as
+(
+  select
+    procedure_id,
+    min(collating_seq) collating_seq,
+    min(procedure_name) procedure_name,
+    lrr_id
+  from
+    epic_rrt_01 er01
+  group by
+    procedure_id,
+    lrr_id
+)
+select
+  procedure_id || '-' || lrr_id,
+  (select id from epic_rrt_normalized where id = eap.lrr_id),
+  'EAP',
+  collating_seq,
+  procedure_name,
+  NULL
+from
+  eap
+where
+  procedure_id is not NULL
+  and procedure_name is not NULL;
+
+-- get rid of some noise (at some point, we should look at these)
+delete from epic_rrt_normalized where parent_id is NULL and id not in ('GHS0', 'GHS148');
+
+insert into epic_rrt_normalized(id, parent_id, node_type, collating_seq, node_name, path_precalculated)
+with eap as
+(
+  select
+    procedure_id,
+    min(collating_seq) collating_seq,
+    min(procedure_name) procedure_name,
+    min(result_review_tree) rrt
+  from
+    epic_rrt_01 er01
+  where
+    show_eap_in_rr = 'Yes'
+  group by
+    procedure_id
+)
+select
+  procedure_id || 'RRT',
+  (select id from epic_rrt_normalized where path_precalculated = eap.rrt),
+  'RRT',
+  collating_seq,
+  procedure_name,
+  NULL
+from
+  eap
+where
+  procedure_id is not NULL
+  and procedure_name is not NULL;
+
+-- get rid of some noise (at some point, we should look at these)
+delete from epic_rrt_normalized where parent_id is NULL and id not in ('GHS0', 'GHS148');
+
+insert into epic_rrt_normalized(id, parent_id, node_type, collating_seq, node_name, path_precalculated)
+with eap as
+(
+  select
+    procedure_id,
+    min(collating_seq) collating_seq,
+    min(procedure_name) procedure_name,
+    min(result_review_tree) rrt
+  from
+    epic_rrt_01 er01
+  where
+    show_eap_in_rr = 'Yes'
+  group by
+    procedure_id
+)
+select
+  procedure_id,
+  (select id from epic_rrt_normalized where id = eap.procedure_id || 'RRT'),
+  'EAP',
+  collating_seq,
+  procedure_name,
+  NULL
+from
+  eap
+where
+  procedure_id is not NULL
+  and procedure_name is not NULL;
+
+-- get rid of some noise (at some point, we should look at these
+delete from epic_rrt_normalized where parent_id is NULL and id not in ('GHS0', 'GHS148');
+
+update epic_rrt_normalized ern
+set
+(
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+)
+=
+(
+  select
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+  from
+    epic_rrt_01
+  where
+    lrr_id = replace(ern.id, 'RRT', '')
+    and rownum <= 1
+)
+where
+  id like '%RRT';
+
+update epic_rrt_normalized ern
+set
+(
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+)
+=
+(
+  select
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+  from
+    epic_rrt_01
+  where
+    lrr_id = replace(ern.id, 'CN', '')
+    and rownum <= 1
+)
+where
+  id like '%CN';
+
+update epic_rrt_normalized ern
+set
+(
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+)
+=
+(
+  select
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+  from
+    epic_rrt_01
+  where
+    lrr_id = ern.id
+    and rownum <= 1
+)
+where
+  node_type = 'LRR';
+
+update epic_rrt_normalized ern
+set
+(
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+)
+=
+(
+  select
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+  from
+    epic_rrt_01
+  where
+    procedure_id = substr(ern.id, 1, instr(ern.id, '-') - 1)
+    and lrr_id = substr(ern.id, instr(ern.id, '-') + 1)
+    and rownum <= 1
+)
+where
+  node_type = 'EAP'
+  and id like '%-%';
+
+update epic_rrt_normalized ern
+set
+(
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+)
+=
+(
+  select
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+  from
+    epic_rrt_01
+  where
+    procedure_id = replace(ern.id, 'RRT', '')
+    and rownum <= 1
+)
+where
+  id like '%RRT'
+  and common_name is NULL;
+
+update epic_rrt_normalized ern
+set
+(
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+)
+=
+(
+  select
+    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+  from
+    epic_rrt_01
+  where
+    procedure_id = ern.id
+    and rownum <= 1
+)
+where
+  node_type = 'EAP'
+  and id not like '%-%';
+
+select
+  lpad(' ', level * 2) || node_name indented_node_name,
+  ern.*
+from
+  epic_rrt_normalized ern
+start with
+  parent_id is NULL
+connect by
+  parent_id = prior id
+order siblings by
+  collating_seq;
+
