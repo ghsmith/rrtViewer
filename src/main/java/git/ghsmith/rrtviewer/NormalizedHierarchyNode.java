@@ -82,11 +82,11 @@ public class NormalizedHierarchyNode implements Comparable<NormalizedHierarchyNo
     }
 
     public String getDispId() {
-        return disp;
+        return dispId;
     }
 
-    public void setDispId(String disp) {
-        this.disp = disp;
+    public void setDispId(String dispId) {
+        this.dispId = dispId;
     }
 
     public boolean isHasEap() {
