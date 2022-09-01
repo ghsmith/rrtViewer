@@ -117,6 +117,8 @@ where
 -- get rid of some PFT LRRs
 delete from epic_rrt_normalized where parent_id is NULL and id not in ('GHS0', 'GHS148');
 
+update epic_rrt_normalized set node_name = common_name where node_type = 'CN';
+
 insert into epic_rrt_normalized(id, parent_id, node_type, collating_seq, node_name, path_precalculated)
 with lrr as
 (
