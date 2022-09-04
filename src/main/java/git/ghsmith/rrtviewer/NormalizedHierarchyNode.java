@@ -14,6 +14,9 @@ public class NormalizedHierarchyNode implements Comparable<NormalizedHierarchyNo
     public String disp;
     public String dispId;
     public boolean hasEap;
+    public boolean duplicatedElsewhere = false;
+
+    public Lrr sourceRecord;
     
     public Map<String, String> attributeMap = new LinkedHashMap<>();
 
@@ -25,6 +28,89 @@ public class NormalizedHierarchyNode implements Comparable<NormalizedHierarchyNo
         return(seq.compareTo(o.seq));
     }
     
+    public static NormalizedHierarchyNode loadFromGrouper(Grouper grouper) {
+        NormalizedHierarchyNode nhn = new NormalizedHierarchyNode();
+        nhn.id = grouper.id;
+        nhn.parentId = grouper.parentId;
+        nhn.nodeType = "RRT";
+        nhn.seq = Long.valueOf(grouper.collatingSeq);
+        nhn.disp = grouper.nodeName;
+        nhn.dispId = grouper.id;
+        return nhn;
+    }
+
+    public static NormalizedHierarchyNode loadRrtFromLrr(Lrr lrr, String parentId, Lrr sourceRecord) {
+        NormalizedHierarchyNode nhn = new NormalizedHierarchyNode();
+        nhn.id = lrr.lrrId + "RRT";
+        nhn.parentId = parentId;
+        nhn.nodeType = "RRT";
+        nhn.seq = Long.valueOf(lrr.collatingSeq);
+        nhn.disp = lrr.lrrExternalName != null && lrr.lrrExternalName.length() > 0 ? lrr.lrrExternalName : lrr.commonName;
+        nhn.dispId = lrr.lrrId;
+        nhn.sourceRecord = sourceRecord;
+        return nhn;
+    }
+    
+    public static NormalizedHierarchyNode loadCnFromLrr(Lrr lrr, String parentId, Lrr sourceRecord) {
+        NormalizedHierarchyNode nhn = new NormalizedHierarchyNode();
+        nhn.id = lrr.lrrId + "CN";
+        nhn.parentId = parentId;
+        nhn.nodeType = "CN";
+        nhn.seq = Long.valueOf(lrr.collatingSeq);
+        nhn.disp = lrr.commonName;
+        nhn.dispId = lrr.lrrId;
+        nhn.sourceRecord = sourceRecord;
+        return nhn;
+    }
+
+    public static NormalizedHierarchyNode loadLrrFromLrr(Lrr lrr, String parentId, Lrr sourceRecord) {
+        NormalizedHierarchyNode nhn = new NormalizedHierarchyNode();
+        nhn.id = lrr.lrrId;
+        nhn.parentId = parentId;
+        nhn.nodeType = "LRR";
+        nhn.seq = Long.valueOf(lrr.collatingSeq);
+        nhn.disp = lrr.lrrName;
+        nhn.dispId = lrr.lrrId;
+        nhn.sourceRecord = sourceRecord;
+        return nhn;
+    }
+    
+    public static NormalizedHierarchyNode loadEapFromLrr(Lrr lrr, String parentId, Lrr sourceRecord) {
+        NormalizedHierarchyNode nhn = new NormalizedHierarchyNode();
+        nhn.id = lrr.procedureId + "-" + lrr.lrrId;
+        nhn.parentId = parentId;
+        nhn.nodeType = "EAP";
+        nhn.seq = Long.valueOf(lrr.collatingSeq);
+        nhn.disp = lrr.procedureName;
+        nhn.dispId = lrr.procedureId;
+        nhn.sourceRecord = sourceRecord;
+        return nhn;
+    }
+
+    public static NormalizedHierarchyNode loadChartingProcedureRrtFromLrr(Lrr lrr, String parentId, Lrr sourceRecord) {
+        NormalizedHierarchyNode nhn = new NormalizedHierarchyNode();
+        nhn.id = lrr.procedureId + "-CHARTINGRRT";
+        nhn.parentId = parentId;
+        nhn.nodeType = "RRT";
+        nhn.seq = Long.valueOf(lrr.collatingSeq);
+        nhn.disp = lrr.procedureName;
+        nhn.dispId = lrr.procedureId;
+        nhn.sourceRecord = sourceRecord;
+        return nhn;
+    }
+
+    public static NormalizedHierarchyNode loadChartingProcedureEapFromLrr(Lrr lrr, String parentId, Lrr sourceRecord) {
+        NormalizedHierarchyNode nhn = new NormalizedHierarchyNode();
+        nhn.id = lrr.procedureId + "-CHARTING";
+        nhn.parentId = parentId;
+        nhn.nodeType = "EAP";
+        nhn.seq = Long.valueOf(lrr.collatingSeq);
+        nhn.disp = lrr.procedureName;
+        nhn.dispId = lrr.procedureId;
+        nhn.sourceRecord = sourceRecord;
+        return nhn;
+    }
+
     public boolean containsIgnoreCase(String searchString){
         String searchStringUC = searchString.toUpperCase();
         if(searchStringUC.startsWith("=")) {
@@ -106,6 +192,11 @@ public class NormalizedHierarchyNode implements Comparable<NormalizedHierarchyNo
             s.append(String.format(",\"%s\"", name));
         }
         return s.toString();
+    }
+
+    @Override
+    public String toString() {
+        return "NormalizedHierarchyNode{" + "id=" + id + ", parentId=" + parentId + ", nodeType=" + nodeType + ", seq=" + seq + ", disp=" + disp + ", dispId=" + dispId + ", hasEap=" + hasEap + ", duplicatedElsewhere=" + duplicatedElsewhere + '}';
     }
     
 }
