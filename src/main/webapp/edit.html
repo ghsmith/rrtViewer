@@ -16,6 +16,17 @@
 
         <script lang="JavaScript">
 
+            function safeStringify (value) {
+              const seen = new Set();
+              return JSON.stringify(value, (k, v) => {
+                if (seen.has(v)) { return '...'; }
+                if (typeof v === 'object') { seen.add(v); }
+                return v;
+              });
+            }
+            
+            var csvFileName;
+
             var rootId = 'ROOT';
 
             var searchResultMap = {};
@@ -40,15 +51,45 @@
                 });
             }
 
+            function rollback() {
+                $.ajax({
+                    'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit/' + csvFileName + '/rollback',
+                    'success': function () {
+                        window.location.reload();
+                    }
+                });
+            }
+
+            function commit() {
+                $.ajax({
+                    'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit/' + csvFileName + '/commit',
+                    'success': function () {
+                        window.location.reload();
+                    }
+                });
+            }
+
             $(document).ready(function () {
+
+                csvFileName = window.location.search.substring(1);
+                $('#csvFileName').html(csvFileName);
+
+                $.ajax({
+                    'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit/' + csvFileName + '/timestamp',
+                    'dataType' : 'text',
+                    'success': function (result) {
+                        $('#csvFileTimestamp').html(result);
+                    }
+                });
 
                 $('#treeView').jstree({
                     'core': {
+                        'check_callback': true,
                         'data': {
                             'url': function (node) {
                                 return node.id === '#' ?
-                                        '/rrtViewer/webresources/NormalizedHierarchyNode/jsTree' :
-                                        '/rrtViewer/webresources/NormalizedHierarchyNode/jsTree';
+                                        '/rrtViewer/webresources/NormalizedHierarchyNodeEdit/' + csvFileName + '/jsTree' :
+                                        '/rrtViewer/webresources/NormalizedHierarchyNodeEdit/' + csvFileName + '/jsTree';
                             },
                             'data': function (node) {
                                 return node.id === '#' ?
@@ -59,12 +100,13 @@
                         'themes': {
                             'icons': false
                         }
-                    }
+                    },
+                    'plugins': [ 'dnd' ]
                 });
 
                 $('#searchButton').on('click', function () {
                     $.ajax({
-                        'url': '/rrtViewer/webresources/NormalizedHierarchyNode/searchResult?searchString=' + encodeURIComponent($('#searchText').val()),
+                        'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit/' + csvFileName + '/searchResult?searchString=' + encodeURIComponent($('#searchText').val()),
                         'success': function (result) {
                             searchResultMap = result;
                             setNodeSearchState();
@@ -100,10 +142,29 @@
     
                 $('#treeView').on('select_node.jstree', function (node, selected, event) {
                     $.ajax({
-                        'url': '/rrtViewer/webresources/NormalizedHierarchyNode/' + selected.node.original.id,
+                        'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit/' + csvFileName + '/' + selected.node.original.id,
                         'success': function (result) {
                             var html = '<div style="border: 1px solid black; margin: 5px; background-color: yellow;">';
-                            html += '<span class="entityName" style="font-weight: bold;">' + selected.node.original.text + '</span>';
+                            html += '<span class="entityName" style="font-weight: bold;">' + selected.node.original.text + ' Attributes</span>';
+                            html += '<pre></pre>';
+                            html += '</div>';
+                            $('#detail').append(html);
+                            $('#detail pre:last').JSONView(result, {collapsed: false});
+                            $('#detail div .entityName:last')[0].scrollIntoView();
+                        }
+                    });
+                });
+
+                $('#treeView').on('move_node.jstree', function (node, moved, event) {
+                    $.ajax({
+                        'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit/' + csvFileName + '/jsTree/move',
+                        'type': 'PUT',
+                        'contentType': "application/json",
+                        'data': safeStringify(moved),
+                        'dataType' : 'text',
+                        'success': function (result) {
+                            var html = '<div style="border: 1px solid black; margin: 5px; background-color: lightgray;">';
+                            html += '<span class="entityName" style="font-weight: bold;">' + moved.node.original.text + ' Changed</span>';
                             html += '<pre></pre>';
                             html += '</div>';
                             $('#detail').append(html);
@@ -124,7 +185,7 @@
         <div id="header" style="width: 96%; padding-bottom: 5px;">
             <p style="font-size: small;">
                 <b>Laboratory Result Taxonomy</b><br/>
-                Rendered from TST Environment <i>RRT Path.xlsx</i> (6/28/2022) and <i>RR.xml</i> (8/26/2022).
+                You are editing <i><span id='csvFileName'></span>.csv</i> last committed <span id='csvFileTimestamp'></span>. [<a href='javascript:{ rollback(); }'>Rollback</a>][<a href='javascript:{ commit(); }'>Commit</a>]
             </p>
             Options: <input id="optionShowId" type="checkbox" checked="true"/> Show ID
             <input id="optionPrune" type="checkbox"/> Prune tree branches without search hits

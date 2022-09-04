@@ -23,6 +23,7 @@ public class ApplicationConfig extends Application {
         resources.add(git.ghsmith.rrtviewer.GenericResource.class);
         resources.add(git.ghsmith.rrtviewer.JerseyMapperProvider.class);
         resources.add(git.ghsmith.rrtviewer.NormalizedHierarchyNodeResource.class);
+        resources.add(git.ghsmith.rrtviewer.NormalizedHierarchyNodeResourceEdit.class);
     }
     
 }

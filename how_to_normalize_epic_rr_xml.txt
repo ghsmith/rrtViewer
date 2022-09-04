@@ -18,6 +18,7 @@ create table epic_rrt_normalized
   node_name varchar2(255) not null,
   path_precalculated varchar2(255),
 
+  Result_Review_Tree varchar2(255),
   Common_Name varchar2(255),
   Procedure_Name varchar2(255),
   Procedure_ID varchar2(255),
@@ -37,6 +38,9 @@ create table epic_rrt_normalized
 );
 
 --import epic_rrt_groupers.csv
+
+insert into epic_rrt_normalized(id, parent_id, node_type, collating_seq, node_name, path_precalculated)
+select * from epic_rrt_normalized_groupers_only;
 
 create table epic_rrt_01
 (
@@ -61,6 +65,18 @@ create table epic_rrt_01
 create index epic_rrt_01_cn_idx on epic_rrt_01(common_name);
 
 --import RR.xml
+
+select result_review_tree
+from epic_rrt_01
+minus
+select path_precalculated
+from epic_rrt_normalized;
+
+select path_precalculated
+from epic_rrt_normalized
+minus
+select result_review_tree
+from epic_rrt_01;
 
 insert into epic_rrt_normalized(id, parent_id, node_type, collating_seq, node_name, path_precalculated)
 with charting_names as
@@ -116,8 +132,6 @@ where
 
 -- get rid of some PFT LRRs
 delete from epic_rrt_normalized where parent_id is NULL and id not in ('GHS0', 'GHS148');
-
-update epic_rrt_normalized set node_name = common_name where node_type = 'CN';
 
 insert into epic_rrt_normalized(id, parent_id, node_type, collating_seq, node_name, path_precalculated)
 with lrr as
@@ -243,12 +257,12 @@ delete from epic_rrt_normalized where parent_id is NULL and id not in ('GHS0', '
 update epic_rrt_normalized ern
 set
 (
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
 )
 =
 (
   select
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
   from
     epic_rrt_01
   where
@@ -261,12 +275,12 @@ where
 update epic_rrt_normalized ern
 set
 (
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
 )
 =
 (
   select
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
   from
     epic_rrt_01
   where
@@ -279,12 +293,12 @@ where
 update epic_rrt_normalized ern
 set
 (
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
 )
 =
 (
   select
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
   from
     epic_rrt_01
   where
@@ -297,12 +311,12 @@ where
 update epic_rrt_normalized ern
 set
 (
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
 )
 =
 (
   select
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
   from
     epic_rrt_01
   where
@@ -317,12 +331,12 @@ where
 update epic_rrt_normalized ern
 set
 (
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
 )
 =
 (
   select
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
   from
     epic_rrt_01
   where
@@ -336,12 +350,12 @@ where
 update epic_rrt_normalized ern
 set
 (
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
 )
 =
 (
   select
-    Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
+    Result_Review_Tree, Common_Name,     Procedure_Name,     Procedure_ID,     Procedure_Category,     LRR_ID,     LRR_Name,     Base_Name,     LRR_External_Name,     LRR_Issue,     Test_Issue,     Test_Inactive,     Test_ID,     Test_Name,     Show_EAP_in_RR
   from
     epic_rrt_01
   where
@@ -351,6 +365,8 @@ set
 where
   node_type = 'EAP'
   and id not like '%-%';
+
+update epic_rrt_normalized set node_name = common_name where node_type = 'CN';
 
 select
   lpad(' ', level * 2) || node_name indented_node_name,

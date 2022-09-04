@@ -36,6 +36,7 @@ public class NormalizedHierarchyNodeResource {
     }
 
     public static final String[] attributes = {
+        "RESULT_REVIEW_TREE",
         "COMMON_NAME",
         "PROCEDURE_NAME",
         "PROCEDURE_ID",
@@ -54,7 +55,7 @@ public class NormalizedHierarchyNodeResource {
     
     private static boolean cached = false;
     private static NormalizedHierarchyNode rootNhn;
-    private static final Map<String, NormalizedHierarchyNode> nhnMapById = new HashMap<String, NormalizedHierarchyNode>();
+    private static final Map<String, NormalizedHierarchyNode> nhnMapById = new HashMap<>();
     
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -156,12 +157,12 @@ public class NormalizedHierarchyNodeResource {
         if(nhn.containsIgnoreCase(searchString)) {
             NormalizedHierarchyNode nhnWalker = nhn;
             while(nhnWalker != null) {
-                if(searchResultMap.get(nhnWalker.getId()) == null) {
-                    //searchResultMap.put(nhnWalker.getId(), new Integer[] {0, 0, 0, 0, 0});
-                    searchResultMap.put(nhnWalker.getId(), new Integer[] {0});
+                if(searchResultMap.get(nhnWalker.id) == null) {
+                    //searchResultMap.put(nhnWalker.id, new Integer[] {0, 0, 0, 0, 0});
+                    searchResultMap.put(nhnWalker.id, new Integer[] {0});
                 }
-                //searchResultMap.get(nhnWalker.getId())[searchResultArrayKey.get(nhn.getNodeType())]++;
-                searchResultMap.get(nhnWalker.getId())[0]++;
+                //searchResultMap.get(nhnWalker.id)[searchResultArrayKey.get(nhn.getNodeType())]++;
+                searchResultMap.get(nhnWalker.id)[0]++;
                 nhnWalker = nhnWalker.parent;
             }
         }

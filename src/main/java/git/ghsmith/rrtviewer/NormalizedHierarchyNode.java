@@ -7,15 +7,15 @@ import java.util.Map;
 
 public class NormalizedHierarchyNode implements Comparable<NormalizedHierarchyNode> {
 
-    String id;
-    String parentId;
-    String nodeType;
-    Long seq;
-    String disp;
-    String dispId;
-    boolean hasEap;
+    public String id;
+    public String parentId;
+    public String nodeType;
+    public Long seq;
+    public String disp;
+    public String dispId;
+    public boolean hasEap;
     
-    Map<String, String> attributeMap = new LinkedHashMap<>();
+    public Map<String, String> attributeMap = new LinkedHashMap<>();
 
     NormalizedHierarchyNode parent;
     List<NormalizedHierarchyNode> children = new ArrayList<>();
@@ -27,83 +27,85 @@ public class NormalizedHierarchyNode implements Comparable<NormalizedHierarchyNo
     
     public boolean containsIgnoreCase(String searchString){
         String searchStringUC = searchString.toUpperCase();
-        if(
-            (disp != null && disp.toUpperCase().contains(searchStringUC))
-            || (dispId != null && dispId.toUpperCase().contains(searchStringUC))
-        ){
-            return true;
-        }
-        for(String attribute : attributeMap.values()) {
-            if(attribute != null && attribute.toUpperCase().contains(searchStringUC)) {
+        if(searchStringUC.startsWith("=")) {
+            searchStringUC = searchStringUC.substring(1);
+            if(
+                (disp != null && disp.toUpperCase().equals(searchStringUC))
+                || (dispId != null && dispId.toUpperCase().equals(searchStringUC))
+            ){
                 return true;
+            }
+            for(String attribute : attributeMap.values()) {
+                if(attribute != null && attribute.toUpperCase().equals(searchStringUC)) {
+                    return true;
+                }
+            }
+        }
+        else {
+            if(
+                (disp != null && disp.toUpperCase().contains(searchStringUC))
+                || (dispId != null && dispId.toUpperCase().contains(searchStringUC))
+            ){
+                return true;
+            }
+            for(String attribute : attributeMap.values()) {
+                if(attribute != null && attribute.toUpperCase().contains(searchStringUC)) {
+                    return true;
+                }
             }
         }
         return false;
     }
-    
-    public String getId() {
-        return id;
-    }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getParentId() {
-        return parentId;
-    }
-
-    public void setParentId(String parentId) {
-        this.parentId = parentId;
-    }
-
-    public String getNodeType() {
-        return nodeType;
-    }
-
-    public void setNodeType(String nodeType) {
-        this.nodeType = nodeType;
-    }
-
-    public Long getSeq() {
-        return seq;
-    }
-
-    public void setSeq(Long seq) {
-        this.seq = seq;
-    }
-
-    public String getDisp() {
-        return disp;
-    }
-
-    public void setDisp(String disp) {
-        this.disp = disp;
-    }
-
-    public String getDispId() {
-        return dispId;
-    }
-
-    public void setDispId(String dispId) {
-        this.dispId = dispId;
-    }
-
-    public boolean isHasEap() {
-        return hasEap;
-    }
-
-    public void setHasEap(boolean hasEap) {
-        this.hasEap = hasEap;
+    public String getPathPrecalculated() {
+        List<String> pathList = new ArrayList<>();
+        NormalizedHierarchyNode currentNode = this;
+        while(currentNode.parent != null) {
+            currentNode = currentNode.parent;
+            if(currentNode.nodeType != null && currentNode.id.startsWith("GHS")) {
+                pathList.add(currentNode.disp);
+            }
+        }
+        StringBuffer s = new StringBuffer();
+        for(int x = pathList.size() - 1; x >= 0; x--) {
+            if(s.length() > 0) {
+                s.append(" > ");
+            }
+            s.append(pathList.get(x));
+        }
+        return s.toString();
     }
     
-    public Map<String, String> getAttributeMap() {
-        return attributeMap;
+    String toStringCsv() {
+        StringBuffer s = new StringBuffer();
+        s.append(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"",
+            id != null ? id : "",
+            parentId != null ? parentId : "",
+            nodeType != null ? nodeType : "",
+            seq != null ? seq : 0,
+            disp != null ? disp : "",
+            getPathPrecalculated()
+        ));
+        for(String name : attributeMap.keySet()) {
+            s.append(String.format(",\"%s\"", attributeMap.get(name)));
+        }
+        return s.toString();
     }
 
-    public void setAttributeMap(Map<String, String> attributeMap) {
-        this.attributeMap = attributeMap;
+    String toStringCsvHeader() {
+        StringBuffer s = new StringBuffer();
+        s.append(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"",
+            "ID",
+            "PARENT_ID",
+            "NODE_TYPE",
+            "COLLATING_SEQ",
+            "NODE_NAME",
+            "PATH_PRECALCULATED"
+        ));
+        for(String name : attributeMap.keySet()) {
+            s.append(String.format(",\"%s\"", name));
+        }
+        return s.toString();
     }
-    
     
 }
