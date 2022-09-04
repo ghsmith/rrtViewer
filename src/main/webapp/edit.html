@@ -63,8 +63,22 @@
             function commit() {
                 $.ajax({
                     'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit/' + csvFileName + '/commit',
-                    'success': function () {
-                        window.location.reload();
+                    'dataType': 'text',
+                    'success': function (result) {
+                        //window.location.reload();
+                        $.ajax({
+                            'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit/' + csvFileName + '/timestamp',
+                            'dataType' : 'text',
+                            'success': function (result) {
+                                $('#csvFileTimestamp').html(result);
+                            }
+                        });
+                        var html = '<div style="border: 1px solid black; margin: 5px; background-color: green;">';
+                        html += '<pre></pre>';
+                        html += '</div>';
+                        $('#detail').append(html);
+                        $('#detail pre:last').html(result);
+                        $('#detail div .entityName:last')[0].scrollIntoView();
                     }
                 });
             }

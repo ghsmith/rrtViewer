@@ -147,8 +147,8 @@ public class NormalizedHierarchyNodeResourceEdit {
         Map<String, NormalizedHierarchyNode> nhnMapById = nhnMapByIdByFile.get(csvFileName);
         NormalizedHierarchyNode rootNhn = rootNhnByFile.get(csvFileName);
         NormalizedHierarchyNode node = nhnMapById.get(jsTreeMove.node.id);
-        NormalizedHierarchyNode oldParent = nhnMapById.get(jsTreeMove.oldParent);
-        NormalizedHierarchyNode newParent = nhnMapById.get(jsTreeMove.parent);
+        NormalizedHierarchyNode oldParent = jsTreeMove.oldParent.equals("#") ? rootNhn : nhnMapById.get(jsTreeMove.oldParent);
+        NormalizedHierarchyNode newParent = jsTreeMove.parent.equals("#") ? rootNhn : nhnMapById.get(jsTreeMove.parent);
         String oldChartsAfterString = "position 0 (first in grouper)";
         if(jsTreeMove.oldPosition > 0) {
             NormalizedHierarchyNode oldChartsAfter = oldParent.children.get(jsTreeMove.oldPosition - 1);
@@ -156,7 +156,7 @@ public class NormalizedHierarchyNodeResourceEdit {
         }
         oldParent.children.remove(jsTreeMove.oldPosition);
         newParent.children.add(jsTreeMove.position, node);
-        node.parentId = newParent.id;
+        node.parentId = newParent.id.equals("ROOT") ? null : newParent.id;
         node.parent = newParent;
         for(int x = 0; x < oldParent.children.size(); x++) {
             oldParent.children.get(x).seq = new Long(x);
@@ -216,7 +216,7 @@ public class NormalizedHierarchyNodeResourceEdit {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{csvFileName}/commit")
-    public void getJsonCommit(@PathParam("csvFileName") String csvFileName, @Context HttpServletResponse response) {
+    public String getJsonCommit(@PathParam("csvFileName") String csvFileName, @Context HttpServletResponse response) {
         Date now = new Date();
         response.setHeader("Expires", "0");
         loadCache(csvFileName);
@@ -252,11 +252,13 @@ public class NormalizedHierarchyNodeResourceEdit {
         catch(IOException e) {
             throw new RuntimeException(e);
         }
+        int commitSize = changeLogByFile.get(csvFileName).size();
         synchronized(nhnMapByIdByFile) {
             nhnMapByIdByFile.remove(csvFileName);
             rootNhnByFile.remove(csvFileName);
             changeLogByFile.remove(csvFileName);
         }
+        return String.format("%d changes committed.", commitSize);
     }
     
     private void loadCache(String csvFileName) {
