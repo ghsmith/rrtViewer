@@ -49,7 +49,10 @@ public class Lrr {
         lrr.showEapInRr = record.get("Show EAP in RR?");
         return lrr;
     }
-    
-    
+
+    @Override
+    public String toString() {
+        return "Lrr{" + "collatingSeq=" + collatingSeq + ", resultReviewTree=" + resultReviewTree + ", commonName=" + commonName + ", procedureName=" + procedureName + ", procedureId=" + procedureId + ", procedureCategory=" + procedureCategory + ", lrrId=" + lrrId + ", lrrName=" + lrrName + ", baseName=" + baseName + ", lrrExternalName=" + lrrExternalName + ", lrrIssue=" + lrrIssue + ", testIssue=" + testIssue + ", testInactive=" + testInactive + ", testId=" + testId + ", testName=" + testName + ", showEapInRr=" + showEapInRr + '}';
+    }
     
 }

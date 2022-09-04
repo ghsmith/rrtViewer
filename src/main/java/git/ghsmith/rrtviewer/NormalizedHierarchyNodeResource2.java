@@ -192,6 +192,7 @@ public class NormalizedHierarchyNodeResource2 {
                     throw new RuntimeException(ex);
                 }
                 // load groupers
+Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INFO, "loading groupers...");
                 rootNhn = new NormalizedHierarchyNode();
                 rootNhn.id = "ROOT";
                 for(String id : grouperMap.keySet()) {
@@ -218,8 +219,9 @@ public class NormalizedHierarchyNodeResource2 {
                     }
                 }
                 // load external names and common names
+Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INFO, "loading external names and common names...");
+                Map<String, Lrr> commonNameMap = new HashMap<>();
                 {
-                    Map<String, Lrr> commonNameMap = new HashMap<>();
                     for(String id : lrrMap.keySet()) {
                         Lrr cLrr = lrrMap.get(id);
                         if(cLrr.commonName == null || cLrr.commonName.length() == 0) {
@@ -257,26 +259,23 @@ public class NormalizedHierarchyNodeResource2 {
                     }
                 }
                 // load LRRs
+Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INFO, "loading LRRs...");
                 for(String lrrId : lrrMap.keySet()) {
                     Lrr cLrr = lrrMap.get(lrrId);
                     if(cLrr.commonName == null || cLrr.commonName.length() == 0) {
                         continue;
                     }
-                    for(String nhnId : new HashSet<String>(nhnMapById.keySet())) { // avoid concurrent modification exception
-                        NormalizedHierarchyNode cNhn = nhnMapById.get(nhnId);
-                        if(!"CN".equals(cNhn.nodeType)) {
-                            continue;
-                        }
-                        if(cNhn.disp.equals(cLrr.commonName)) {
-                            NormalizedHierarchyNode nhn = NormalizedHierarchyNode.loadLrrFromLrr(cLrr, nhnId, cLrr);
-                            nhnMapById.put(nhn.id, nhn);
-                            nhnMapById.get(nhn.parentId).children.add(nhn);
-                            nhn.parent = nhnMapById.get(nhn.parentId);
-                            break;
-                        }
+                    NormalizedHierarchyNode nhnCn = nhnMapById.get(commonNameMap.get(cLrr.commonName).lrrId + "CN");
+                    if(nhnCn == null) {
+                        continue;
                     }
+                    NormalizedHierarchyNode nhn = NormalizedHierarchyNode.loadLrrFromLrr(cLrr, nhnCn.id, cLrr);
+                    nhnMapById.put(nhn.id, nhn);
+                    nhnMapById.get(nhn.parentId).children.add(nhn);
+                    nhn.parent = nhnMapById.get(nhn.parentId);
                 }
                 // load EAPs
+Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INFO, "loading EAPs...");
                 for(String procedureId : procedureMap.keySet()) {
                     Lrr cLrr = procedureMap.get(procedureId);
                     NormalizedHierarchyNode nhnLrr = nhnMapById.get(cLrr.lrrId);
@@ -290,6 +289,7 @@ public class NormalizedHierarchyNodeResource2 {
                     nhn.parent = nhnMapById.get(nhn.parentId);
                 }
                 // load charting EAPs
+Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INFO, "loading charting EAPs...");
                 for(String idProc : chartingProcedureMap.keySet()) {
                     Lrr cLrr = chartingProcedureMap.get(idProc);
                     for(String idGrouper : grouperMap.keySet()) {
@@ -308,6 +308,7 @@ public class NormalizedHierarchyNodeResource2 {
                     }
                 }
                 nhnMapById.put(rootNhn.id, rootNhn);
+Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INFO, "sorting...");
                 for(NormalizedHierarchyNode nhn : nhnMapById.values()) {
                     if(nhn.duplicatedElsewhere) {
                         nhn.disp = nhn.disp + " {ALSO DUPLICATED ELSEWHERE}";
@@ -315,6 +316,7 @@ public class NormalizedHierarchyNodeResource2 {
                     Collections.sort(nhn.children);
                     nhn.hasEap = searchForEap(nhn);
                 }
+Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INFO, "done.");
                 cached = true;
             }   
         }
