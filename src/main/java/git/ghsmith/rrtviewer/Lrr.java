@@ -50,6 +50,46 @@ public class Lrr {
         return lrr;
     }
 
+    public static String toStringCsvHeader() {
+        return String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"",
+            "Result Review tree",
+            "Common Name",
+            "Procedure Name",
+            "Procedure ID",
+            "Procedure Category",
+            "LRR ID",
+            "LRR Name",
+            "Base Name",
+            "LRR External Name",
+            "LRR Issue",
+            "Test Issue",
+            "Test Inactive?",
+            "Test ID",
+            "Test Name",
+            "Show EAP in RR?"
+        );
+    }
+
+    public String toStringCsv() {
+        return String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"",
+            resultReviewTree,
+            commonName,
+            procedureName,
+            procedureId,
+            procedureCategory,
+            lrrId,
+            lrrName,
+            baseName,
+            lrrExternalName,
+            lrrIssue,
+            testIssue,
+            testInactive,
+            testId,
+            testName,
+            showEapInRr
+        );
+    }
+    
     @Override
     public String toString() {
         return "Lrr{" + "collatingSeq=" + collatingSeq + ", resultReviewTree=" + resultReviewTree + ", commonName=" + commonName + ", procedureName=" + procedureName + ", procedureId=" + procedureId + ", procedureCategory=" + procedureCategory + ", lrrId=" + lrrId + ", lrrName=" + lrrName + ", baseName=" + baseName + ", lrrExternalName=" + lrrExternalName + ", lrrIssue=" + lrrIssue + ", testIssue=" + testIssue + ", testInactive=" + testInactive + ", testId=" + testId + ", testName=" + testName + ", showEapInRr=" + showEapInRr + '}';

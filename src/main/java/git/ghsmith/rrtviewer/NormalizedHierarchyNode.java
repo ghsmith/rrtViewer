@@ -146,11 +146,11 @@ public class NormalizedHierarchyNode implements Comparable<NormalizedHierarchyNo
     public String getPathPrecalculated() {
         List<String> pathList = new ArrayList<>();
         NormalizedHierarchyNode currentNode = this;
-        while(currentNode.parent != null) {
-            currentNode = currentNode.parent;
+        while(currentNode != null) {
             if(currentNode.nodeType != null && currentNode.id.startsWith("GHS")) {
                 pathList.add(currentNode.disp);
             }
+            currentNode = currentNode.parent;
         }
         StringBuffer s = new StringBuffer();
         for(int x = pathList.size() - 1; x >= 0; x--) {

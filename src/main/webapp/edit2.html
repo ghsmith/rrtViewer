@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Laboratory Result Taxonomy</title>
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+        <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+        <script src="//cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js"></script>
+        <link rel="stylesheet" href="json/jquery.jsonview.min.css" />
+        <script type="text/javascript" src="json/jquery.jsonview.min.js"></script>
+
+        <script lang="JavaScript">
+
+            function safeStringify (value) {
+              const seen = new Set();
+              return JSON.stringify(value, (k, v) => {
+                if (seen.has(v)) { return '...'; }
+                if (typeof v === 'object') { seen.add(v); }
+                return v;
+              });
+            }
+            
+            var rootId = 'ROOT';
+
+            var searchResultMap = {};
+
+            function setNodeSearchState() {
+                $($('#treeView').jstree().get_json($('#treeView'), {'flat': 'true'})).each(function (index, value) {
+                    var node = $('#treeView').jstree().get_node(this.id);
+                    $('#treeView').jstree('set_text', node, node.original.text);
+                    if (this.id in searchResultMap && (!$('#optionPruneEapless').is(':checked') || ($('#optionPruneEapless').is(':checked') && node.original.hasEap))) {
+                        node.li_attr['style'] = 'font-weight: bold;';
+                        $('#treeView').jstree('set_text', node, node.original.text + (node.original.hasEap ? '' : '<span style=background-color:yellow;>&Dagger;</span>'));
+                        $('#treeView').jstree('show_node', node);
+                    } else {
+                        node.li_attr['style'] = 'font-weight : normal;';
+                        $('#treeView').jstree('set_text', node, node.original.text + (node.original.hasEap ? '' : '<span style=background-color:yellow;>&Dagger;</span>'));
+                        $('#treeView').jstree($('#optionPrune').is(':checked') || ($('#optionPruneEapless').is(':checked') && !node.original.hasEap) ? 'hide_node' : 'show_node', node);
+                    }
+                    if ($('#optionShowId').is(':checked')) {
+                        var text = $('#treeView').jstree('get_text', node);
+                        $('#treeView').jstree('set_text', node, text + " [" + node.original.dispId + "]");
+                    }
+                });
+            }
+
+            function rollback() {
+                $.ajax({
+                    'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit2/rollback',
+                    'success': function () {
+                        window.location.reload();
+                    }
+                });
+            }
+
+            function commit() {
+                $.ajax({
+                    'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit2/commit',
+                    'dataType': 'text',
+                    'success': function (result) {
+                        //window.location.reload();
+                        $.ajax({
+                            'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit2/timestamp',
+                            'dataType' : 'text',
+                            'success': function (result) {
+                                $('#csvFileTimestamp').html(result);
+                            }
+                        });
+                        var html = '<div style="border: 1px solid black; margin: 5px; background-color: green;">';
+                        html += '<pre></pre>';
+                        html += '</div>';
+                        $('#detail').append(html);
+                        $('#detail pre:last').html(result);
+                        $('#detail div .entityName:last')[0].scrollIntoView();
+                    }
+                });
+            }
+
+            $(document).ready(function () {
+
+                $.ajax({
+                    'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit2/timestamp',
+                    'dataType' : 'text',
+                    'success': function (result) {
+                        $('#csvFileTimestamp').html(result);
+                    }
+                });
+
+                $('#treeView').jstree({
+                    'core': {
+                        'check_callback': true,
+                        'data': {
+                            'url': function (node) {
+                                return node.id === '#' ?
+                                        '/rrtViewer/webresources/NormalizedHierarchyNodeEdit2/jsTree' :
+                                        '/rrtViewer/webresources/NormalizedHierarchyNodeEdit2/jsTree';
+                            },
+                            'data': function (node) {
+                                return node.id === '#' ?
+                                        {'parentId': rootId} :
+                                        {'parentId': node.id};
+                            }
+                        },
+                        'themes': {
+                            'icons': false
+                        }
+                    },
+                    'plugins': [ 'dnd' ]
+                });
+
+                $('#searchButton').on('click', function () {
+                    $.ajax({
+                        'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit2/searchResult?searchString=' + encodeURIComponent($('#searchText').val()),
+                        'success': function (result) {
+                            searchResultMap = result;
+                            setNodeSearchState();
+                        }
+                    });
+                });
+
+                $('#searchWithChildrenButton').on('click', function () {
+                    $.ajax({
+                        'url': '/rrtViewer/webresources/NormalizedHierarchyNode2/searchWithChildrenResult?searchString=' + encodeURIComponent($('#searchText').val()),
+                        'success': function (result) {
+                            searchResultMap = result;
+                            setNodeSearchState();
+                        }
+                    });
+                });
+
+                $('#treeView').on('loaded.jstree', function (node) {
+                    setNodeSearchState();
+                });
+
+                $('#treeView').on('after_open.jstree', function (node) {
+                    setNodeSearchState();
+                });
+
+                $('#optionShowId').on('click', function () {
+                    setNodeSearchState();
+                });
+
+                $(document).keypress(function (event) {
+                    if (event.which == 13) {
+                        $('#searchButton').trigger('click');
+                    }
+                });
+
+                $('#optionPrune').on('click', function() {
+                    setNodeSearchState();
+                });
+    
+                $('#optionPruneEapless').on('click', function() {
+                    setNodeSearchState();
+                });
+    
+                $('#treeView').on('select_node.jstree', function (node, selected, event) {
+                    $.ajax({
+                        'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit2/' + selected.node.original.id,
+                        'success': function (result) {
+                            var html = '<div style="border: 1px solid black; margin: 5px; background-color: yellow;">';
+                            html += '<span class="entityName" style="font-weight: bold;">' + selected.node.original.text + ' Attributes</span>';
+                            html += '<pre></pre>';
+                            html += '</div>';
+                            $('#detail').append(html);
+                            $('#detail pre:last').JSONView(result, {collapsed: false});
+                            $('#detail div .entityName:last')[0].scrollIntoView();
+                        }
+                    });
+                });
+
+                $('#treeView').on('move_node.jstree', function (node, moved, event) {
+                    $.ajax({
+                        'url': '/rrtViewer/webresources/NormalizedHierarchyNodeEdit2/jsTree/move',
+                        'type': 'PUT',
+                        'contentType': "application/json",
+                        'data': safeStringify(moved),
+                        'dataType' : 'text',
+                        'success': function (result) {
+                            var html = '<div style="border: 1px solid black; margin: 5px; background-color: lightgray;">';
+                            html += '<span class="entityName" style="font-weight: bold;">' + moved.node.original.text + ' Changed</span>';
+                            html += '<pre></pre>';
+                            html += '</div>';
+                            $('#detail').append(html);
+                            $('#detail pre:last').JSONView(result, {collapsed: false});
+                            $('#detail div .entityName:last')[0].scrollIntoView();
+                        }
+                    });
+                });
+
+            });
+
+        </script>
+
+    </head>
+
+    <body style="font-family: monospace;">
+
+        <div id="header" style="width: 96%; padding-bottom: 5px;">
+            <p style="font-size: small;">
+                <b>Laboratory Result Taxonomy</b><br/>
+                You are editing <i><span id='csvFileName'></span>lrr.csv</i> last committed <span id='csvFileTimestamp'></span>. [<a href='javascript:{ rollback(); }'>Rollback</a>][<a href='javascript:{ commit(); }'>Commit</a>]
+            </p>
+            Options: <input id="optionShowId" type="checkbox" checked="true"/> Show ID
+            <input id="optionPrune" type="checkbox"/> Prune tree branches without search hits
+            <input id="optionPruneEapless" type="checkbox"/> Prune tree branches without EAPs<br/>
+            <input id="searchText" type="text" size="60"/> <input id="searchButton" type="button" value="Search"> <input id="searchWithChildrenButton" type="button" value="Search+ (include children of hits)">
+        </div>
+        <div id="treeView" style="width: 48%; height: 80vh; border: 1px solid black; display: inline-block; vertical-align: top; overflow-y: auto;"></div>
+        <div id="detail" style="width: 48%; height: 80vh; border: 1px solid black; display: inline-block; vertical-align: top; overflow-y: auto;">
+
+            <div style="padding: 5px;">
+            <b>Legend</b>
+            <ul>
+                <li><b>[RRT] = A nomenclature that is used in the XXXX Result Review Tree (RRT).
+                    </b> This is an abstraction of the XXXX Foundation System component groups provided
+                    by XXXX in <i>RRT Path.xlsx</i> on 6/28/2022 and the RRT representation provided
+                    by XXXX in <i>RR.xml</i> on 8/26/2022. The terminal (lowest-level) RRT nodes represent
+                    individual result names in the XXXX RRT and are generated by grouping LRR records
+                    by <i>common_name</i> and selecting the <i>lrr_external_name</i> from the LRR record with
+                    the lowest <i>lrr_id</i>. If the selected <i>lrr_external_name</i> is NULL, then the
+                    <i>lrr_name</i> from the same record is used. All LRR records with the same
+                    <i>common_name</i> chart on the same line in the XXXX RRT.</li>
+                <li><b>[CN] = The LRR record that was used to generate the RRT nomenclature.</b>
+                    I suspect this is 1:1 with the parent node, but I wanted to be prepared for the
+                    possibility that groups of LRR records with the different <i>common_name</i>
+                    values have the same <i>external_name</i> value.</li>
+                <li><b>[LRR] = An LRR record.</b>
+                <li><b>[EAP] = An EAP record.</b>
+                <li><b><span style=background-color:yellow;>&Dagger;</span> = There are no subordinate EAP records.</b> I am speculating that this is probably
+                    a record created to accommodate converted legacy data.
+            </ul>
+
+            <b>Notes</b>
+            <ul>
+                <li><b>The collation sequence is determined by the order of records in
+                        <i>RRT Path.xlsx</i> and <i>RR.xml</i>.</b></li>
+                <li><b>Some EAP records chart.</b> In these cases, the terminal
+                    (lowest-level) RRT node nomenclature is generated from the <i>procedure_name</i>
+                    and an [RRT] parent has an [EAP] child without any other intervening node types.
+                    Most EAP records do not chart, so this is infrequently encountered.
+                <li><b>The search function is case insensitive and covers all attributes,
+                        including IDs</b>. For example, searching for "LAB16" would highlight all results
+                    associated with the "ELECTROLYTE PANEL" procedure. You can also use the pipe
+                    character to search for multiple strings concurrently (e.g., "sodium|potassium").</li>
+                <li><b>The record details shown in this pane are approximations.</b> When you
+                    click on a record in the left-hand pane I attempt to localize the best record
+                    in <i>RR.xml</i> and show it to you in JSON format in the right-hand pane. Due
+                    to issues of cardinality, there are some approximations in-play. In general,
+                    there is less approximation the lower you are in the hierarchy. I will improve
+                    this at the first opportunity.</li>
+            </ul>
+            </div>
+
+            <pre id="detailJson">
+            </pre>
+
+        </div>
+
+    </body>
+
+</html>

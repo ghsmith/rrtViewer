@@ -25,6 +25,7 @@ public class ApplicationConfig extends Application {
         resources.add(git.ghsmith.rrtviewer.NormalizedHierarchyNodeResource.class);
         resources.add(git.ghsmith.rrtviewer.NormalizedHierarchyNodeResource2.class);
         resources.add(git.ghsmith.rrtviewer.NormalizedHierarchyNodeResourceEdit.class);
+        resources.add(git.ghsmith.rrtviewer.NormalizedHierarchyNodeResourceEdit2.class);
     }
     
 }
