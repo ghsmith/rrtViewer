@@ -1,5 +1,8 @@
-OBJECTIVE:
+*************************************************************************************************************************
+*** THIS IS NO LONGER USED, THE CURRENT VERSION (NormalizedHierarchyNodeResource2.java) RENDERS DIRECTLY FROM RR.XML. ***
+*************************************************************************************************************************
 
+OBJECTIVE:
 [RRT] NAME
   [CN] Name [#]
     [LRR] Name [#]
