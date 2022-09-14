@@ -111,7 +111,7 @@ public class NormalizedHierarchyNodeResource {
                 try {
                     rootNhn = new NormalizedHierarchyNode();
                     rootNhn.id = "ROOT";
-                    Reader in = new FileReader("c:/stuff/epic_rrt_normalized.csv");
+                    Reader in = new FileReader("/home/ec2-user/epic_rrt_normalized.csv");
                     CSVParser parser = CSVParser.parse(in, CSVFormat.DEFAULT.withFirstRecordAsHeader());
                     for (CSVRecord record : parser) {
                         NormalizedHierarchyNode nhn = new NormalizedHierarchyNode();

@@ -28,7 +28,7 @@ import org.apache.commons.csv.CSVRecord;
 @Path("NormalizedHierarchyNode2")
 public class NormalizedHierarchyNodeResource2 {
 
-    public static final String directory = "c:/stuff/";
+    public static final String directory = "/home/ec2-user/";
     
     public static class JsTree {
         public String id;
@@ -315,6 +315,13 @@ Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INF
                     }
                     Collections.sort(nhn.children);
                     nhn.hasEap = searchForEap(nhn);
+
+if(nhn.nodeType != null && nhn.nodeType.equals("EAP") && nhn.sourceRecord != null
+&& ((nhn.sourceRecord.testIssue != null && nhn.sourceRecord.testIssue.length() > 0) || (nhn.sourceRecord.testInactive != null && nhn.sourceRecord.testInactive.length() > 0))
+) {
+  nhn.disp = nhn.disp + " {INACTIVE}";
+}
+
                 }
 Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INFO, "done.");
                 cached = true;

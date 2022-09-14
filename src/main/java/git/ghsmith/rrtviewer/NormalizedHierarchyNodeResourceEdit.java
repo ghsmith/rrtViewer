@@ -40,7 +40,7 @@ public class NormalizedHierarchyNodeResourceEdit {
     public final static SimpleDateFormat sdfDay = new SimpleDateFormat("yyyyMMdd");        
     public final static SimpleDateFormat sdfTimestamp = new SimpleDateFormat("yyyyMMddHHmmss");        
 
-    public final static String directory = "c:/stuff/";
+    public final static String directory = "/home/ec2-user/edit";
     
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class JsTree {
