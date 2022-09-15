@@ -400,7 +400,9 @@ Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INF
     }    
 
     private boolean searchForEap(NormalizedHierarchyNode nhn) {
-        if(nhn.nodeType != null && nhn.nodeType.equals("EAP")) {
+//        if(nhn.nodeType != null && nhn.nodeType.equals("EAP")) {
+if(nhn.nodeType != null && nhn.nodeType.equals("EAP") && nhn.sourceRecord != null
+&& ((nhn.sourceRecord.testIssue == null || nhn.sourceRecord.testIssue.length() == 0) && (nhn.sourceRecord.testInactive == null || nhn.sourceRecord.testInactive.length() == 0))) {
             return true;
         }
         for(NormalizedHierarchyNode childNhn : nhn.children) {
