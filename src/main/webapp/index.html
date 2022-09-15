@@ -64,7 +64,7 @@
 
                 $('#searchButton').on('click', function () {
                     $.ajax({
-                        'url': '/rrtViewer/webresources/NormalizedHierarchyNode2/searchResult?searchString=' + encodeURIComponent($('#searchText').val()),
+                        'url': '/rrtViewer/webresources/NormalizedHierarchyNode2/searchResult?avoidInactiveEaps=' + ($('#optionAvoidInactiveEaps').is(':checked') ? 'true' : 'false') + '&searchString=' + encodeURIComponent($('#searchText').val()),
                         'success': function (result) {
                             searchResultMap = result;
                             setNodeSearchState();
@@ -74,7 +74,7 @@
 
                 $('#searchWithChildrenButton').on('click', function () {
                     $.ajax({
-                        'url': '/rrtViewer/webresources/NormalizedHierarchyNode2/searchWithChildrenResult?searchString=' + encodeURIComponent($('#searchText').val()),
+                        'url': '/rrtViewer/webresources/NormalizedHierarchyNode2/searchWithChildrenResult?avoidInactiveEaps=' + ($('#optionAvoidInactiveEaps').is(':checked') ? 'true' : 'false') + '&searchString=' + encodeURIComponent($('#searchText').val()),
                         'success': function (result) {
                             searchResultMap = result;
                             setNodeSearchState();
@@ -139,7 +139,8 @@
             Options: <input id="optionShowId" type="checkbox" checked="true"/> Show ID
             <input id="optionPrune" type="checkbox"/> Prune tree branches without search hits
             <input id="optionPruneEapless" type="checkbox"/> Prune tree branches without EAPs<br/>
-            <input id="searchText" type="text" size="60"/> <input id="searchButton" type="button" value="Search"> <input id="searchWithChildrenButton" type="button" value="Search+ (include children of hits)">
+            <input id="searchText" type="text" size="60"/> <input id="searchButton" type="button" value="Search"> <input id="searchWithChildrenButton" type="button" value="Search+ (include children of hits)"><br/>
+            <input id="optionAvoidInactiveEaps" type="checkbox" checked="true"/> Don't search inactive EAPs
         </div>
         <div id="treeView" style="width: 48%; height: 80vh; border: 1px solid black; display: inline-block; vertical-align: top; overflow-y: auto;"></div>
         <div id="detail" style="width: 48%; height: 80vh; border: 1px solid black; display: inline-block; vertical-align: top; overflow-y: auto;">

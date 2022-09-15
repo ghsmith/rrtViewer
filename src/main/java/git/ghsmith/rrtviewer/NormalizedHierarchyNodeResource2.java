@@ -1,13 +1,11 @@
 package git.ghsmith.rrtviewer;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +27,7 @@ import org.apache.commons.csv.CSVRecord;
 public class NormalizedHierarchyNodeResource2 {
 
     public static final String directory = "/home/ec2-user/";
+    //public static final String directory = "c:/stuff/";
     
     public static class JsTree {
         public String id;
@@ -103,12 +102,12 @@ public class NormalizedHierarchyNodeResource2 {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/searchResult")
-    public Map<String, Integer[]> getJsonSearchResult(@QueryParam("searchString") String searchString, @Context HttpServletResponse response) {
+    public Map<String, Integer[]> getJsonSearchResult(@QueryParam("searchString") String searchString, @QueryParam("avoidInactiveEaps") boolean avoidInactiveEaps, @Context HttpServletResponse response) {
         response.setHeader("Expires", "0");
         loadCache();
         Map<String, Integer[]> searchResultMap = new HashMap();
         for(String searchStringParsed : (searchString.split(("\\|")))) {
-            search(rootNhn, searchStringParsed.trim(), searchResultMap);
+            search(rootNhn, searchStringParsed.trim(), searchResultMap, avoidInactiveEaps);
         }
         return searchResultMap;
     }
@@ -116,12 +115,12 @@ public class NormalizedHierarchyNodeResource2 {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/searchWithChildrenResult")
-    public Map<String, Integer[]> getJsonSearchWithChildrenResult(@QueryParam("searchString") String searchString, @Context HttpServletResponse response) {
+    public Map<String, Integer[]> getJsonSearchWithChildrenResult(@QueryParam("searchString") String searchString, @QueryParam("avoidInactiveEaps") boolean avoidInactiveEaps, @Context HttpServletResponse response) {
         response.setHeader("Expires", "0");
         loadCache();
         Map<String, Integer[]> searchResultMap = new HashMap();
         for(String searchStringParsed : (searchString.split(("\\|")))) {
-            searchWithChildren(rootNhn, searchStringParsed.trim(), searchResultMap);
+            searchWithChildren(rootNhn, searchStringParsed.trim(), searchResultMap, avoidInactiveEaps);
         }
         return searchResultMap;
     }
@@ -316,7 +315,8 @@ Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INF
                     Collections.sort(nhn.children);
                     nhn.hasEap = searchForEap(nhn);
 
-if(nhn.nodeType != null && nhn.nodeType.equals("EAP") && nhn.sourceRecord != null
+if(
+nhn.nodeType != null && nhn.nodeType.equals("EAP") && nhn.sourceRecord != null
 && ((nhn.sourceRecord.testIssue != null && nhn.sourceRecord.testIssue.length() > 0) || (nhn.sourceRecord.testInactive != null && nhn.sourceRecord.testInactive.length() > 0))
 ) {
   nhn.disp = nhn.disp + " {INACTIVE}";
@@ -329,8 +329,20 @@ Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INF
         }
     }
 
-    private void search(NormalizedHierarchyNode nhn, String searchString, Map<String, Integer[]> searchResultMap) {
-        if(nhn.containsIgnoreCase(searchString)) {
+    private void search(NormalizedHierarchyNode nhn, String searchString, Map<String, Integer[]> searchResultMap, boolean avoidInactiveEaps) {
+        if(
+(
+    (
+        !(                
+        nhn.nodeType != null && nhn.nodeType.equals("EAP") && nhn.sourceRecord != null
+        && ((nhn.sourceRecord.testIssue != null && nhn.sourceRecord.testIssue.length() > 0) || (nhn.sourceRecord.testInactive != null && nhn.sourceRecord.testInactive.length() > 0))
+        )
+        && avoidInactiveEaps
+    )
+||
+    !avoidInactiveEaps
+)             
+                && nhn.containsIgnoreCase(searchString)) {
             NormalizedHierarchyNode nhnWalker = nhn;
             while(nhnWalker != null) {
                 if(searchResultMap.get(nhnWalker.id) == null) {
@@ -343,12 +355,24 @@ Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INF
             }
         }
         for(NormalizedHierarchyNode childNhn : nhn.children) {
-            search(childNhn, searchString, searchResultMap);
+            search(childNhn, searchString, searchResultMap, avoidInactiveEaps);
         }
     }    
 
-    private void searchWithChildren(NormalizedHierarchyNode nhn, String searchString, Map<String, Integer[]> searchResultMap) {
-        if(nhn.containsIgnoreCase(searchString)) {
+    private void searchWithChildren(NormalizedHierarchyNode nhn, String searchString, Map<String, Integer[]> searchResultMap, boolean avoidInactiveEaps) {
+        if(
+(
+    (
+        !(                
+        nhn.nodeType != null && nhn.nodeType.equals("EAP") && nhn.sourceRecord != null
+        && ((nhn.sourceRecord.testIssue != null && nhn.sourceRecord.testIssue.length() > 0) || (nhn.sourceRecord.testInactive != null && nhn.sourceRecord.testInactive.length() > 0))
+        )
+        && avoidInactiveEaps
+    )
+||
+    !avoidInactiveEaps
+)             
+                && nhn.containsIgnoreCase(searchString)) {
             NormalizedHierarchyNode nhnWalker = nhn;
             while(nhnWalker != null) {
                 if(searchResultMap.get(nhnWalker.id) == null) {
@@ -370,7 +394,7 @@ Logger.getLogger(NormalizedHierarchyNodeResource2.class.getName()).log(Level.INF
         }
         else {
             for(NormalizedHierarchyNode childNhn : nhn.children) {
-                searchWithChildren(childNhn, searchString, searchResultMap);
+                searchWithChildren(childNhn, searchString, searchResultMap, avoidInactiveEaps);
             }
         }
     }    
